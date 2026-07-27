@@ -1,192 +1,81 @@
-# 🚀 Guia Rápido: Ativando CrewAI + Ollama no Termux
+╔════════════════════════════╗
+║       AEGIS PLATFORM       ║
+║    DevSecOps CLI Toolkit   ║
+╚════════════════════════════╝
 
-Guia completo para reativar sua ferramenta de auditoria com 30 agentes CrewAI + Ollama no Termux.
+# 🚀 AEGIS AUDIT
 
----
+## 📌 Overview
+Plataforma unificada de auditoria de segurança baseada em LLM com múltiplos agentes especializados.
 
-## 📋 Pré-requisitos
+## 🧠 What this project does
+- Plataforma unificada de auditoria de segurança baseada em LLM com múltiplos agentes especializados.
 
-Antes de começar, certifique-se de ter:
+## 🏗 Architecture
+O subsistema é desenhado seguindo práticas rígidas de engenharia defensiva:
+- **CLI Layer**: Camada de terminal unificada operando sob o padrão de design system Aegis CLI.
+- **Backend Logic**: Lógica funcional síncrona com mitigadores integrados contra exaustão de cotas.
+- **Security Layer**: Filtros e mecanismos de escape para blindagem zero-trust.
 
-- ✅ Termux instalado
-- ✅ Python 3.10+ instalado
-- ✅ CrewAI instalado no ambiente virtual
-- ✅ Ollama instalado
-
----
-
-## 🔧 PASSO 1: ATIVAR O AMBIENTE VIRTUAL
-
-```bash
-# Ativar o ambiente virtual
-source ~/crewai-env/bin/activate
-
-# Verificar se está ativado (deve mostrar (crewai-env) no prompt)
-which python
-
-# Verificar versão do Python
-python --version
+## 📁 Project Structure
+```text
+├── Dockerfile
+├── README.md
+├── cli/menu.py
+├── cli/ui_3d.py
+├── core/engine.py
+├── core/logger.py
+├── docker-compose.yml
+├── main.py
+├── plugins/__init__.py
+├── requirements.txt
+└── README.md
 ```
 
----
-
-## 🔧 PASSO 2: VERIFICAR OLLAMA
+## ⚙️ Installation & Termux Setup
+Instalação direta e compatível nativamente com ambientes Linux, Kali Linux e Termux:
 
 ```bash
-# Verificar se Ollama está rodando
-curl http://localhost:11434/api/tags
+# 1. Clonar repositório e acessar diretório
+git clone <repo_url>
+cd aegis-audit
 
-# Se não estiver rodando, iniciar em background
+# 2. Ativar Ambiente Virtual e Instalar Dependências
+python3 -m venv ~/crewai-env || true
+source ~/crewai-env/bin/activate
+pip install -r requirements.txt
+
+# 3. Iniciar Servidor Local Ollama
 ollama serve > /dev/null 2>&1 &
-
-# Aguardar iniciar
 sleep 3
-
-# Verificar novamente
-curl http://localhost:11434/api/tags
-
-# Listar modelos disponíveis
-ollama list
 ```
 
----
-
-## 🔧 PASSO 3: VERIFICAR ARQUIVOS DO PROJETO
+## ▶️ Usage & Execution
+Para inicializar e interagir com o subsistema de 30 Agentes de Auditoria de Segurança:
 
 ```bash
-# Entrar no diretório do projeto
-cd ~/30agents-crewai
-
-# Verificar se o script principal existe
-ls -la main_olluna.py
-
-# Se não existir, criar o arquivo (ver seção "Criando o Script")
+python main.py --target https://example.com --model llama3.2:latest --verbose
 ```
 
----
-
-## 🚀 PASSO 4: EXECUTAR A FERRAMENTA
-
+### ⚡ Comando Completo em Uma Linha (QuickStart)
 ```bash
-# Executar com target específico
-python main_olluna.py --target https://ifood.com.br --model llama3.2:latest --verbose
-
-# Ou com target de exemplo
-python main_olluna.py --target https://example.com --model llama3.2:latest --verbose
+source ~/crewai-env/bin/activate && ollama serve > /dev/null 2>&1 & && sleep 3 && python main_ollama_pro.py --target https://example.com --model llama3.2:latest --verbose
 ```
+
+## 🔐 Security Model & Zero-Trust Audit
+- **Classification**: DEFENSIVO / AUDITORIA
+- **Higiene Digital**: Simulação de Análise de Risco via LLM
+- **Mitigações Ativas**:
+  - *Ameaça:* Travamento por indisponibilidade do Ollama → *Mitigação:* Tratamento estrito de exceções HTTP (Timeout, ConnectionError) com fallback amigável
+
+## 🧩 Dependencies & Requirements
+- **Plataforma/Runtime**: Python 3.11
+- **Dependências Externas**:
+  - `crewai` (^0.28.0): Orquestração dos 30 agentes de segurança
+  - `langchain-community` (^0.0.38): Integração subjacente de LLM
+  - `requests` (^2.31.0): Comunicação HTTP com a API do Ollama
+  - `colorama` (^0.4.6): Renderização de interface 3D e cores no terminal
+  - `rich` (^13.7.1): Formatação avançada de tabelas e logs no terminal
 
 ---
-
-## 🔧 COMANDO COMPLETO EM UMA LINHA
-
-```bash
-source ~/crewai-env/bin/activate && ollama serve > /dev/null 2>&1 & && sleep 3 && cd ~/30agents-crewai && python main_olluna.py --target https://ifood.com.br --model llama3.2:latest --verbose
-```
-
----
-
-## ✅ VERIFICAÇÃO RÁPIDA (TUDO DE UMA VEZ)
-
-```bash
-# Verificar tudo de uma vez
-source ~/crewai-env/bin/activate
-pip list | grep crewai
-ollama list
-python main_olluna.py --target https://example.com --verbose
-```
-
----
-
-## 📁 CRIANDO O SCRIPT PRINCIPAL
-
-Se o arquivo `main_olluna.py` não existir, crie-o com o comando abaixo:
-
-```bash
-cat > main_olluna.py << 'EOF'
-# Conteúdo completo do script aqui
-EOF
-```
-
----
-
-## 🎯 EXEMPLO DE SAÍDA ESPERADA
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  ██████╗ ██╗     ██╗   ██╗███╗   ██╗                          ║
-║  ██╔══██╗██║     ██║   ██║████╗  ██║                          ║
-║  ██████╔╝██║     ██║   ██║██╔██╗ ██║                          ║
-║  ██╔═══╝ ██║     ██║   ██║██║╚██╗██║                          ║
-║  ██║     ███████╗╚██████╔╝██║ ╚████║                          ║
-║  ╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝                          ║
-╠══════════════════════════════════════════════════════════════════╣
-║                   v3.0 - 30 SECURITY AGENTS                    ║
-║                                                                  ║
-║  TARGET  https://ifood.com.br                                    ║
-║  MODEL   llama3.2:latest                                         ║
-║  AGENTS  30 SPECIALISTS                                          ║
-╚══════════════════════════════════════════════════════════════════╝
-```
-
----
-
-## 🐛 SOLUÇÃO DE PROBLEMAS
-
-### Erro: "ModuleNotFoundError: No module named 'crewai'"
-
-```bash
-# Instalar CrewAI novamente
-source ~/crewai-env/bin/activate
-pip install crewai crewai-tools
-```
-
-### Erro: "Ollama não está rodando"
-
-```bash
-# Iniciar Ollama
-ollama serve > /dev/null 2>&1 &
-
-# Verificar
-curl http://localhost:11434/api/tags
-```
-
-### Erro: "Modelo não encontrado"
-
-```bash
-# Baixar modelo
-ollama pull llama3.2
-ollama pull mistral
-```
-
----
-
-## 📊 ESTRUTURA DO PROJETO
-
-```
-~/30agents-crewai/
-├── main_olluna.py          # Script principal
-├── reports/                # Relatórios gerados
-│   └── report_*.json
-├── crewai-env/             # Ambiente virtual
-└── README.md               # Documentação
-```
-
----
-
-## 📝 NOTAS IMPORTANTES
-
-- ⚠️ A auditoria é **apenas para fins educacionais e autorizados**
-- ✅ Use apenas em domínios que você tem permissão para testar
-- 🔒 Respeite as políticas de bug bounty e termos de serviço
-
----
-
-**Pronto! Sua ferramenta está ativa novamente!** 🚀
-
----
-
-## 🔗 LINKS ÚTEIS
-
-- [Documentação CrewAI](https://docs.crewai.com/)
-- [Documentação Ollama](https://ollama.com/)
-- [Google VRP](https://bugbounty.google.com/)
+*Generated by AEGIS DevSecOps Security Orchestrator System*
