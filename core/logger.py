@@ -1,23 +1,22 @@
-from rich.console import Console
-from rich.theme import Theme
+#!/usr/bin/env python3
+import sys
+from colorama import Fore, Style, init
 
-custom_theme = Theme({
-    "info": "cyan bold",
-    "success": "green bold",
-    "warning": "yellow bold",
-    "error": "red bold"
-})
+init(autoreset=True)
 
-console = Console(theme=custom_theme)
+class AegisLogger:
+    @staticmethod
+    def info(msg):
+        print(f"{Fore.CYAN}[+] {Style.RESET_ALL}{msg}")
 
-def log_info(msg: str):
-    console.print(f"[info][+][/info] {msg}")
+    @staticmethod
+    def success(msg):
+        print(f"{Fore.GREEN}[✓] {Style.RESET_ALL}{msg}")
 
-def log_success(msg: str):
-    console.print(f"[success][✓][/success] {msg}")
+    @staticmethod
+    def warning(msg):
+        print(f"{Fore.YELLOW}[!] {Style.RESET_ALL}{msg}")
 
-def log_warning(msg: str):
-    console.print(f"[warning][!][/warning] {msg}")
-
-def log_error(msg: str):
-    console.print(f"[error][-][/error] {msg}")
+    @staticmethod
+    def error(msg):
+        print(f"{Fore.RED}[-] {Style.RESET_ALL}{msg}")
