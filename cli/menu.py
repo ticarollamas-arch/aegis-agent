@@ -1,39 +1,40 @@
-from rich.prompt import Prompt
-from rich.console import Console
-from cli.banner import show_banner
-from cli.commands import analyze, doctor
-from core.logger import log_info, log_warning
-import sys
+#!/usr/bin/env python3
+import os
+from colorama import Fore, Style
+from core.logger import AegisLogger
+from core.engine import run_audit, check_ollama_health
 
-console = Console()
-
-def interactive_menu():
-    show_banner()
+def show_menu():
     while True:
-        console.print("\n[bold cyan]TOOLBOX MENU[/bold cyan]")
-        console.print("  [1] Recon (Reconhecimento de hosts)")
-        console.print("  [2] Enum (Mapeamento de servicos)")
-        console.print("  [3] Crawl (Crawler assincrono)")
-        console.print("  [4] Analyze (Auditoria LLM Completa)")
-        console.print("  [5] Report (Exportar relatorios)")
-        console.print("  [6] Doctor (Health Check)")
-        console.print("  [7] Sair")
+        print(Fore.CYAN + "\n╔══════════════════════════════════╗")
+        print("║         AEGIS FRAMEWORK          ║")
+        print("║     Enterprise CLI Platform      ║")
+        print("╚══════════════════════════════════╝" + Style.RESET_ALL)
+        print(" [1] Recon (Reconhecimento)")
+        print(" [2] Enum (Mapeamento)")
+        print(" [3] Crawl (Crawler)")
+        print(" [4] Analyze (Auditoria 30 Agentes LLM)")
+        print(" [5] Report (Exportar)")
+        print(" [6] Doctor (Health Check)")
+        print(" [7] Sair\n")
         
-        choice = Prompt.ask("\n[bold white]Selecione uma opcao[/bold white]", choices=["1", "2", "3", "4", "5", "6", "7"])
+        choice = input(Fore.YELLOW + "aegis> " + Style.RESET_ALL)
         
-        if choice == "1":
-            log_warning("Modulo Recon em desenvolvimento (Plugin Architecture).")
-        elif choice == "2":
-            log_warning("Modulo Enum em desenvolvimento (Plugin Architecture).")
-        elif choice == "3":
-            log_warning("Modulo Crawl em desenvolvimento (Plugin Architecture).")
-        elif choice == "4":
-            target = Prompt.ask("[bold white]Digite o Target (ex: https://example.com)[/bold white]")
-            analyze(target=target)
-        elif choice == "5":
-            log_info("Verifique a pasta 'reports/' para os JSONs gerados.")
-        elif choice == "6":
-            doctor()
-        elif choice == "7":
-            log_info("Encerrando Aegis CLI. Ate logo!")
-            sys.exit(0)
+        if choice == '4':
+            target = input(Fore.YELLOW + "Informe o Target (ex: https://example.com): " + Style.RESET_ALL)
+            if target:
+                run_audit(target)
+            else:
+                AegisLogger.warning("Target inválido.")
+        elif choice == '6':
+            AegisLogger.info("Executando diagnóstico do sistema...")
+            models = check_ollama_health()
+            if models:
+                AegisLogger.success(f"Ollama OK. Modelos disponíveis: {', '.join(models)}")
+            else:
+                AegisLogger.error("Ollama indisponível. Verifique o serviço.")
+        elif choice == '7':
+            AegisLogger.info("Encerrando Aegis Framework...")
+            break
+        else:
+            AegisLogger.warning("Módulo em desenvolvimento ou opção inválida.")
