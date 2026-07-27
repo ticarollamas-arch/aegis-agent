@@ -3,12 +3,23 @@ version: '3.8'
 services:
   aegis-audit:
     build: .
-    container_name: aegis-audit
-    environment:
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    container_name: aegis-audit-cli
     volumes:
       - ./reports:/app/reports
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
     stdin_open: true
     tty: true
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aegis-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
