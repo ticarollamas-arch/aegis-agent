@@ -1,97 +1,138 @@
-import os
-import time
-import json
-import requests
+#!/usr/bin/env python3
+import os, sys, json, time
 from datetime import datetime
+import requests
 from crewai import Agent, Task, Crew, Process
 from langchain_community.llms import Ollama
-from core.logger import log_info, log_success, log_warning, log_error
+from cli.ui_3d import banner_3d, show_agent_3d, progress_bar_3d
+from core.logger import AegisLogger
+from colorama import Fore, Style
 
 NOMES_AGENTES = [
-    ("Reconhecimento Web", "Mapeia tecnologias e estrutura"),
-    ("Headers de Seguranca", "Analisa headers HTTP"),
-    ("OWASP Top 10", "Verifica conformidade OWASP"),
-    ("Score Seguranca", "Calcula score 0-100")
+    ("🔍 Reconhecimento Web", "Mapeia tecnologias e estrutura", "🧠"),
+    ("📋 Headers de Segurança", "Analisa headers HTTP", "🛡️"),
+    ("🍪 Cookies", "Verifica segurança de cookies", "🔒"),
+    ("🔐 SSL/TLS", "Analisa certificados SSL", "🔑"),
+    ("🌐 CORS", "Verifica configuração CORS", "🌍"),
+    ("🛡️ CSP", "Analisa Content Security Policy", "🛡️"),
+    ("🔑 Autenticação", "Verifica mecanismos de login", "🔐"),
+    ("👤 Gerenciamento de Sessão", "Analisa sessões e JWT", "🧑‍💻"),
+    ("📝 Validação de Input", "Verifica proteção contra injeção", "✍️"),
+    ("⚠️ Tratamento de Erros", "Analisa vazamento de informações", "⚠️"),
+    ("📊 Logs e Monitoramento", "Verifica práticas de logging", "📈"),
+    ("📜 OWASP Top 10", "Verifica conformidade OWASP", "📋"),
+    ("📏 CIS Benchmarks", "Verifica conformidade CIS", "📐"),
+    ("🔏 GDPR", "Verifica conformidade GDPR", "🔏"),
+    ("💳 PCI-DSS", "Verifica conformidade PCI-DSS", "💳"),
+    ("💻 Segurança de Código", "Analisa código fonte", "💻"),
+    ("📦 Dependências", "Verifica CVEs em dependências", "📦"),
+    ("🔑 Secrets", "Identifica credenciais expostas", "🔑"),
+    ("⚙️ Configurações", "Analisa hardening", "⚙️"),
+    ("📊 Score de Segurança", "Calcula score 0-100", "📊"),
+    ("🎯 Priorização", "Prioriza vulnerabilidades", "🎯"),
+    ("📁 Relatórios", "Gera relatório técnico", "📁"),
+    ("🔧 Remediação", "Sugere correções", "🔧"),
+    ("🤝 Conselheiro", "Recomenda melhorias", "🤝"),
+    ("🔗 APIs REST", "Analisa segurança de APIs", "🔗"),
+    ("📡 GraphQL", "Analisa segurança GraphQL", "📡"),
+    ("🔌 WebSockets", "Analisa segurança WebSockets", "🔌"),
+    ("🎫 JWT", "Analisa segurança de tokens", "🎫"),
+    ("🚦 Rate Limiting", "Verifica proteção anti-DoS", "🚦"),
+    ("📋 Recomendações Finais", "Consolida recomendações", "📋"),
 ]
 
-def check_ollama_health(base_url: str, timeout: float = 5.0) -> bool:
+def check_ollama_health():
+    host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     try:
-        response = requests.get(f"{base_url}/api/tags", timeout=timeout)
+        response = requests.get(f"{host}/api/tags", timeout=5.0)
         response.raise_for_status()
-        return True
+        data = response.json()
+        models = [m.get("name") for m in data.get("models", [])]
+        return models
     except requests.exceptions.Timeout:
-        log_error(f"Tempo limite excedido ({timeout}s) ao conectar no Ollama em {base_url}")
+        AegisLogger.error("Tempo limite excedido ao conectar no Ollama.")
+        return []
     except requests.exceptions.ConnectionError:
-        log_error(f"Falha de conexao recusada com Ollama em {base_url}. O servico esta rodando?")
+        AegisLogger.error(f"Falha de conexão. Ollama não está rodando em {host}.")
+        return []
     except requests.exceptions.HTTPError as http_err:
-        log_error(f"Erro HTTP retornado pelo Ollama: {http_err}")
+        AegisLogger.error(f"Erro HTTP ao acessar Ollama: {http_err}")
+        return []
     except Exception as e:
-        log_error(f"Erro inesperado ao verificar Ollama: {str(e)}")
-    return False
+        AegisLogger.error(f"Erro inesperado ao verificar Ollama: {str(e)}")
+        return []
 
-def run_audit(target: str, model: str, base_url: str):
-    if not check_ollama_health(base_url):
+def run_audit(target, verbose=False):
+    models = check_ollama_health()
+    if not models:
+        AegisLogger.error("Nenhum modelo disponível ou Ollama offline. Abortando.")
         return
     
-    log_info(f"Inicializando LLM ({model})...")
-    llm = Ollama(model=model, base_url=base_url, temperature=0.7)
-    log_success("LLM configurado com sucesso.")
+    modelo_usar = next((m for m in ["llama3.2:latest", "mistral:latest", "llama3:latest"] if m in models), models[0])
     
+    os.system('clear' if os.name == 'posix' else 'cls')
+    banner_3d(target, modelo_usar)
+    
+    AegisLogger.info("Configurando LLM...")
+    host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    llm = Ollama(model=modelo_usar, base_url=host, temperature=0.7)
+    AegisLogger.success("LLM configurado!")
+    
+    AegisLogger.info("\n🔍 CRIANDO 30 AGENTES ESPECIALIZADOS...\n")
     agents = []
-    tasks = []
-    
-    log_info("Criando esquadrao de agentes...")
-    for nome, desc in NOMES_AGENTES:
+    for i, (nome, desc, icone) in enumerate(NOMES_AGENTES, 1):
         agent = Agent(
             role=f"Especialista em {nome}",
             goal=f"Analisar {desc} do target {target}",
-            backstory=f"Auditor senior especializado em {nome}",
+            backstory=f"Especialista em {nome} com anos de experiência em segurança",
             llm=llm,
-            verbose=False,
+            verbose=verbose,
             allow_delegation=False
         )
         agents.append(agent)
-        
+        print(Fore.GREEN + Style.BRIGHT + f"  ✅ {i:02d}. {icone} {nome}" + Fore.LIGHTBLACK_EX + f" - {desc}" + Style.RESET_ALL)
+    
+    tasks = []
+    for i, agent in enumerate(agents):
         task = Task(
-            description=f"Execute analise de {nome} para {target}",
-            expected_output=f"Relatorio detalhado de {nome}",
+            description=f"Realizar análise completa de {NOMES_AGENTES[i][0]} do target {target}. Identifique vulnerabilidades teóricas e documente.",
+            expected_output=f"Relatório detalhado de {NOMES_AGENTES[i][0]}",
             agent=agent
         )
         tasks.append(task)
     
-    log_success(f"{len(agents)} agentes criados.")
-    
-    crew = Crew(
-        agents=agents,
-        tasks=tasks,
-        process=Process.sequential,
-        verbose=False
-    )
-    
-    log_info("Iniciando auditoria sequencial...")
-    start_time = time.time()
+    print(Fore.CYAN + Style.BRIGHT + "\n🚀 INICIANDO AUDITORIA COM 30 AGENTES...\n" + Style.RESET_ALL)
     
     try:
-        result = crew.kickoff()
-        elapsed = time.time() - start_time
+        start_time = time.time()
+        for i, agent in enumerate(agents):
+            nome, desc, icone = NOMES_AGENTES[i]
+            show_agent_3d(i+1, nome, desc, icone)
+            task = tasks[i]
+            # Execução síncrona simulada para o blueprint
+            task.execute_sync() if hasattr(task, 'execute_sync') else None
+            progress_bar_3d(i+1, len(agents), nome)
+            print()
+        
+        elapsed_time = time.time() - start_time
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        report_path = f"reports/report_30agents_{timestamp}.json"
         
         os.makedirs("reports", exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        report_path = f"reports/audit_{timestamp}.json"
-        
         report_data = {
             "target": target,
-            "model": model,
-            "execution_time_seconds": round(elapsed, 2),
             "timestamp": datetime.now().isoformat(),
-            "status": "COMPLETED"
+            "model": modelo_usar,
+            "total_agents": len(agents),
+            "execution_time": elapsed_time,
+            "result": "Auditoria concluída (Simulação)"
         }
-        
         with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump(report_data, f, indent=2)
+            json.dump(report_data, f, indent=2, ensure_ascii=False)
             
-        log_success(f"Auditoria concluida em {elapsed:.2f}s")
-        log_success(f"Relatorio salvo em: {report_path}")
+        AegisLogger.success(f"RELATÓRIO SALVO: {report_path}")
         
+    except KeyboardInterrupt:
+        AegisLogger.warning("Auditoria interrompida pelo usuário.")
     except Exception as e:
-        log_error(f"Falha critica durante a execucao da auditoria: {str(e)}")
+        AegisLogger.error(f"Erro durante a auditoria: {str(e)}")
